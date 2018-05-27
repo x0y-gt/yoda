@@ -3,8 +3,6 @@ import getpass
 from pathlib import Path
 from time import sleep
 
-import sys
-
 class Shell(object):
   WAIT_FOR_DATA = 0.1 #seconds
   # Max buffer in a paramiko shellel
@@ -53,7 +51,12 @@ class Shell(object):
     self._cmdCurrent = cmd
     self._cmdExecuting = True
     self.shell.send(self._remoteCmd(cmd) + '\n')
-    return self.recv()
+    output = ''
+    while self._cmdExecuting:
+      code, buffer = self.recv()
+      output += buffer
+
+    return [code, output]
 
   def recv(self):
     buffer = self.shell.recv(Shell.BUFFER_SIZE).decode("utf-8")
@@ -64,19 +67,29 @@ class Shell(object):
       sleep(Shell.WAIT_FOR_DATA)
 
     # Remove some lines from output
-    if (self._cmdExecuting):
+    if (self._cmdExecuting and self._cmdCurrent in buffer):
       _blackHole, buffer = buffer.split(self._remoteCmd(self._cmdCurrent)) # remove current cmd
 
     # Verify if it stops asking for input
-    if any(stopWord in tail for stopWord in Shell.INPUT_CHARACTERS):
-      pass
-      # Ask for input
+    if self._cmdExecuting and any(stopWord in tail for stopWord in Shell.INPUT_CHARACTERS):
+      if (self.verbose):
+        print(buffer)
+      # Get the last line - not efficient
+      # Missing support for: Is the information correct? [Y/n]
+      lastLine = buffer.splitlines()[-1]
+      if ('password' in lastLine.lower()):
+        stdin = getpass.getpass('[local] Password: ')
+      else:
+        stdin = input('[local]: ')
+      self.shell.send(stdin + '\n')
+      return None, buffer
 
     if Shell.EXIT_CODE in tail:
       self._cmdExecuting = False
       buffer, code = buffer.split(Shell.EXIT_CODE)
       code = code[:code.find('\r\n')]
       return [code, buffer]
+
     return None, buffer
 
   def _remoteCmd(self, cmd):

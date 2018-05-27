@@ -28,8 +28,10 @@ def yoda(ctx, host, verbose, exit):
 def site_add(ctx):
   """Creates a new nginx virtualhost"""
   shell = ctx.obj['shell']
+  shell.verbose = True
 
-  code, output = shell.cmd("ls -l /")
+  #code, output = shell.cmd("sudo ls -l /")
+  code, output = shell.cmd("sudo adduser trash")
   print(code)
   print(output)
 
