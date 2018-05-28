@@ -7,5 +7,5 @@ def importHost(host):
   config.load()
   hostConfig = config.search_host(host)
   if (hostConfig == []):
-    raise click.ClickException("Host does not exists in %s" % sshConfigPath)
+    raise Exception("Host does not exists in %s" % sshConfigPath)
   return hostConfig

@@ -1,93 +1,58 @@
+import os
 import click
 from yoda.ssh.shell import Shell
 from yoda.ssh.config import importHost
 
-@click.group()
-@click.option('--host', '-h', default="myserver", help="The name of the connection defined in ~/.ssh/config file")
-@click.option('--verbose', '-v', count=True, help="Explain what is being done")
-@click.option('--exit/--no-exit', default=False)
+# Context obj
+class Cmd():
+  def __init__(self):
+    self.verbose = False
+    self.shell = None
+    self.host = None
+
+pass_cmd = click.make_pass_decorator(Cmd, ensure=True)
+
+class CmdsLoader(click.MultiCommand):
+  _cmdFolder = os.path.abspath(os.path.join(os.path.dirname(__file__), 'cmds'))
+
+  def list_commands(self, ctx):
+    rv = []
+    for filename in os.listdir(self._cmdFolder):
+      if filename.endswith('.py'):
+        rv.append(filename[:-3])
+    rv.sort()
+    return rv
+
+  def get_command(self, ctx, name):
+    try:
+      cmdFullName = 'yoda.cmds.' + name
+      print(cmdFullName)
+      mod = __import__(cmdFullName, None, None, ['cmd'])
+    except ImportError:
+      return
+    return mod.cmd
+
+@click.command(cls=CmdsLoader)
+@click.option('-v', '--verbose', count=True, help="Explain what is being done")
+@click.option('-h', '--host', default="myserver", help="The name of the connection defined in ~/.ssh/config file")
 @click.pass_context
-def yoda(ctx, host, verbose, exit):
+def yoda(ctx, verbose, host):
   shell = Shell(host)
   hostConfig = importHost(host)
   shell.setConfig(hostConfig[0]['options'])
   shell.connect()
   if (verbose):
-    click.echo("Connecting to host %s" % host)
-  ctx.obj = {
-    'shell': shell,
-    'host': host,
-    'exit': exit,
-    'verbose': verbose
-  }
-  if (verbose):
     click.echo("Connected to host %s" % host)
 
-@yoda.command()
-@click.pass_context
-def site_add(ctx):
-  """Creates a new nginx virtualhost"""
-  shell = ctx.obj['shell']
-  shell.verbose = True
+  # Setting up cmd context
+  cmd = Cmd()
+  cmd.shell = shell
+  cmd.host = host
+  cmd.verbose = verbose
 
-  #code, output = shell.cmd("sudo ls -l /")
-  code, output = shell.cmd("sudo adduser trash")
-  print(code)
-  print(output)
-
-  return 0
+  ctx.obj = cmd
 
 
-siteTemplate = """##
-# You should look at the following URL's in order to grasp a solid understanding
-# of Nginx configuration files in order to fully unleash the power of Nginx.
-# http://wiki.nginx.org/Pitfalls
-# http://wiki.nginx.org/QuickStart
-# http://wiki.nginx.org/Configuration
-#
-# Generally, you will want to move this file somewhere, and start with a clean
-# file but keep this around for reference. Or just disable in sites-enabled.
-#
-# Please see /usr/share/doc/nginx-doc/examples/ for more detailed examples.
-##
-
-server {
-  listen 80;
-  listen [::]:80;
-
-  root /var/www/domain.com/html/public;
-
-  # Add index.php to the list if you are using PHP
-  index index.php index.html index.htm;
-
-                                                                                                                                                                                                                 server_name domain.com www.domain.com;
-
-                                                                                                                                                                                                                         location / {
-                                                                                                                                                                                                                         # First attempt to serve request as file, then
-                                                                                                                                                                                                                         # as directory, then fall back to displaying a 404.
-                                                                                                                                                                                                                         # try_files $uri $uri/ =404;
-                                                                                                                                                                                                                         try_files $uri $uri/ /index.php?$query_string;
-                                                                                                                                                                                                                         }
-
-                                # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
-                                #
-                                location ~ \.php$ {
-                                include snippets/fastcgi-php.conf;
-
-                                                                                # With php7.0-cgi alone:
-                                                                                #fastcgi_pass 127.0.0.1:9000;
-                                                                                # With php7.0-fpm:
-                                                                                # fastcgi_pass unix:/run/php/php7.0-fpm.sock;
-                                                                                # With php5-fpm:
-                                                                                fastcgi_pass unix:/run/php/php5.6-fpm.sock;
-                                                                                fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-                                                                                }
-
-                                                                                                                                                                                                # deny access to .htaccess files, if Apache's document root
-                                                                                                                                                                                                # concurs with nginx's one
-                                                                                                                                                                                                location ~ /\.ht/  {return 404;}
-                                                                                                                                                                                                location ~ /\.git/  {return 404;}
-                                                                                                                                                                                                }"""
 
 
 
