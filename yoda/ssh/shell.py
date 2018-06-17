@@ -91,7 +91,8 @@ class Shell(object):
     if Shell.EXIT_CODE in tail:
       self._cmdExecuting = False
       buffer, code = buffer.split(Shell.EXIT_CODE)
-      code = code[:code.find('\r\n')]
+      if(not code.isdigit()):
+        code = code[:code.find('\r\n')]
 
       #print if interactive and if buffer is not empty
       buffer = buffer.strip()
