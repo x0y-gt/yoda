@@ -6,7 +6,7 @@ from time import sleep
 class Shell(object):
   WAIT_FOR_DATA = 0.1 #seconds
   # Max buffer in a paramiko shellel
-  BUFFER_SIZE = 32768
+  BUFFER_SIZE = 32767
   # To stop receiving data
   SHELL_CHARACTER = ["$ "]
   INPUT_CHARACTERS = [": "]
@@ -20,7 +20,7 @@ class Shell(object):
     self.port = 22
     self.user = "root"
     self.keyfile = str(Path.home()) + "/.ssh/id_rsa"
-    self.verbose = False
+    self.interactive = False
     self.shellStopCharacters = Shell.SHELL_CHARACTER #Just at the beginning
     self._cmdCurrent = ''
     self._cmdExecuting = False
@@ -42,15 +42,17 @@ class Shell(object):
     client.connect(self.host, port=self.port, username=self.user, key_filename=self.keyfile)
     self.shell = client.invoke_shell()
     sleep(Shell.WAIT_FOR_DATA)
-    code, stdout = self.recv()
-    if (self.verbose):
-      print(stdout)
+    #Receive the data output
+    self.recv()
     self.shellStopCharacters = [Shell.EXIT_CODE] + Shell.SHELL_CHARACTER + Shell.INPUT_CHARACTERS
 
+  # Execute remote cmd
   def cmd(self, cmd, input=False):
     self._cmdCurrent = cmd
     self._cmdExecuting = True
     self.shell.send(self._remoteCmd(cmd) + '\n')
+    if (self.interactive):
+      print("%s$> %s" % (self.name, cmd))
     output = ''
     while self._cmdExecuting:
       code, buffer = self.recv()
@@ -72,8 +74,10 @@ class Shell(object):
 
     # Verify if it stops asking for input
     if self._cmdExecuting and any(stopWord in tail for stopWord in Shell.INPUT_CHARACTERS):
-      if (self.verbose):
-        print(buffer)
+      #print if interactive
+      if (self.interactive):
+        print(buffer) #, end='', flush=True)
+
       # Get the last line - not efficient
       # Missing support for: Is the information correct? [Y/n]
       lastLine = buffer.splitlines()[-1]
@@ -88,6 +92,12 @@ class Shell(object):
       self._cmdExecuting = False
       buffer, code = buffer.split(Shell.EXIT_CODE)
       code = code[:code.find('\r\n')]
+
+      #print if interactive and if buffer is not empty
+      buffer = buffer.strip()
+      if (self.interactive and buffer):
+        print(buffer) #, end='', flush=True)
+
       return [code, buffer]
 
     return None, buffer

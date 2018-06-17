@@ -26,7 +26,6 @@ class CmdsLoader(click.MultiCommand):
   def get_command(self, ctx, name):
     try:
       cmdFullName = 'yoda.cmds.' + name
-      print(cmdFullName)
       mod = __import__(cmdFullName, None, None, ['cmd'])
     except ImportError:
       return
@@ -34,9 +33,10 @@ class CmdsLoader(click.MultiCommand):
 
 @click.command(cls=CmdsLoader)
 @click.option('-v', '--verbose', count=True, help="Explain what is being done")
+@click.option('-i', '--interactive', count=True, help="Show all the output from the established remote shell session")
 @click.option('-h', '--host', default="myserver", help="The name of the connection defined in ~/.ssh/config file")
 @click.pass_context
-def yoda(ctx, verbose, host):
+def yoda(ctx, verbose, interactive, host):
   shell = Shell(host)
   hostConfig = importHost(host)
   shell.setConfig(hostConfig[0]['options'])
@@ -45,14 +45,13 @@ def yoda(ctx, verbose, host):
     click.echo("Connected to host %s" % host)
 
   # Setting up cmd context
+  shell.interactive = bool(interactive)
   cmd = Cmd()
   cmd.shell = shell
   cmd.host = host
   cmd.verbose = verbose
 
   ctx.obj = cmd
-
-
 
 
 
