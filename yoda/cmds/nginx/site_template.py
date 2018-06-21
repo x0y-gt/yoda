@@ -1,10 +1,12 @@
 def getSiteTemplate(templateType, siteDomain, ip="", port="80", proxy_port="4000"):
   if (ip):
     address = ip + ":" + port
+    proxy_address = ip + ":" + port
   else:
     address = port
+    proxy_address = port
 
-  return header + templates[templateType].format(domain=siteDomain, address=address, proxy_port=proxy_port)
+  return header + templates[templateType].format(domain=siteDomain, address=address, proxy_address=proxy_address, proxy_port=proxy_port)
 
 templates = {
   #php5 ----------------------------------------------------------------------
@@ -56,8 +58,8 @@ server {{
   error_log  /var/log/nginx/domains/{domain}.error.log error;
 
   location / {{
-    proxy_pass http://localhost:{proxy_port};
-    access_log /var/log/nginx/domains/{{domain}}.log combined;
+    proxy_pass http://127.0.0.1:{proxy_port};
+    access_log /var/log/nginx/domains/{domain}.log combined;
   }}
 
   # deny access to .htaccess files, if Apache's document root concurs with nginx's one
@@ -68,12 +70,17 @@ server {{
   location ~ /\.bzr/  {{return 404;}}
 }}
 
+map $http_upgrade $connection_upgrade {{
+  default upgrade;
+  '' close;
+}}
+
 server {{
-  listen 127.0.0.1:{proxy_port};
+  listen {proxy_address};
   server_name {domain} www.{domain};
 
   location / {{
-    proxy_pass      http://127.0.0.1:{proxy_port};
+    proxy_pass http://127.0.0.1:{proxy_port};
     proxy_http_version 1.1;
     proxy_set_header Upgrade $http_upgrade;
     proxy_set_header Connection "upgrade";

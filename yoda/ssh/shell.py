@@ -3,10 +3,12 @@ import getpass
 from pathlib import Path
 from time import sleep
 
+import sys
+
 class Shell(object):
   WAIT_FOR_DATA = 0.1 #seconds
-  # Max buffer in a paramiko shellel
-  BUFFER_SIZE = 32767
+  # Max buffer in a paramiko shell
+  BUFFER_SIZE = 1000 #32767
   # To stop receiving data
   SHELL_CHARACTER = ["$ "]
   INPUT_CHARACTERS = [": "]
@@ -50,7 +52,7 @@ class Shell(object):
   def cmd(self, cmd, input=False):
     self._cmdCurrent = cmd
     self._cmdExecuting = True
-    self.shell.send(self._remoteCmd(cmd) + '\n')
+    sent = self.shell.sendall(self._remoteCmd(cmd) + '\n')
     if (self.interactive):
       print("%s$> %s" % (self.name, cmd))
     output = ''
@@ -63,17 +65,22 @@ class Shell(object):
   def recv(self):
     buffer = self.shell.recv(Shell.BUFFER_SIZE).decode("utf-8")
     tail = buffer[-Shell.TAIL_LENGTH:]
+    sleep(Shell.WAIT_FOR_DATA)
     while not any(stopWord in tail for stopWord in self.shellStopCharacters):
       buffer += self.shell.recv(Shell.BUFFER_SIZE).decode("utf-8")
+      #print(temp, end='', flush=True)
+
+      # Remove some stuff from buffer
+      if (self._cmdExecuting and " \r" in buffer):
+        buffer = buffer.replace(" \r", '') # Some trash because of the emulations of the shell
+      if (self._cmdExecuting and self._remoteCmd(self._cmdCurrent) in buffer):
+        buffer = buffer.replace(self._remoteCmd(self._cmdCurrent), '') # remove current cmd
+
       tail = buffer[-Shell.TAIL_LENGTH:]
       sleep(Shell.WAIT_FOR_DATA)
 
-    # Remove some lines from output
-    if (self._cmdExecuting and self._cmdCurrent in buffer):
-      _blackHole, buffer = buffer.split(self._remoteCmd(self._cmdCurrent)) # remove current cmd
-
     # Verify if it stops asking for input
-    if self._cmdExecuting and any(stopWord in tail for stopWord in Shell.INPUT_CHARACTERS):
+    if self._cmdExecuting and tail.endswith(tuple(Shell.INPUT_CHARACTERS)):
       #print if interactive
       if (self.interactive):
         print(buffer) #, end='', flush=True)
