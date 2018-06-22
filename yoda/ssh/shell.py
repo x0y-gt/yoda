@@ -1,9 +1,8 @@
+import sys
 import paramiko
 import getpass
 from pathlib import Path
 from time import sleep
-
-import sys
 
 class Shell(object):
   WAIT_FOR_DATA = 0.1 #seconds
@@ -22,6 +21,7 @@ class Shell(object):
     self.port = 22
     self.user = "root"
     self.keyfile = str(Path.home()) + "/.ssh/id_rsa"
+    self.force = False
     self.interactive = False
     self.shellStopCharacters = Shell.SHELL_CHARACTER #Just at the beginning
     self._cmdCurrent = ''
@@ -59,6 +59,10 @@ class Shell(object):
     while self._cmdExecuting:
       code, buffer = self.recv()
       output += buffer
+
+    #exit if code is different than 0
+    if (code is not 0):
+      sys.exit(code)
 
     return [code, output]
 

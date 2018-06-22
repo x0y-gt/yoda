@@ -34,9 +34,10 @@ class CmdsLoader(click.MultiCommand):
 @click.command(cls=CmdsLoader)
 @click.option('-v', '--verbose', count=True, help="Explain what is being done")
 @click.option('-i', '--interactive', count=True, help="Show all the output from the established remote shell session")
+@click.option('-f', '--force', is_flag=True, help="Force the execution of the commands if one fails")
 @click.option('-h', '--host', default="myserver", help="The name of the connection defined in ~/.ssh/config file")
 @click.pass_context
-def yoda(ctx, verbose, interactive, host):
+def yoda(ctx, verbose, interactive, force, host):
   shell = Shell(host)
   hostConfig = importHost(host)
   shell.setConfig(hostConfig[0]['options'])
@@ -46,6 +47,7 @@ def yoda(ctx, verbose, interactive, host):
 
   # Setting up cmd context
   shell.interactive = bool(interactive)
+  shell.force = force
   cmd = Cmd()
   cmd.shell = shell
   cmd.host = host
