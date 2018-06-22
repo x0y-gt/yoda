@@ -11,7 +11,7 @@ class Shell(object):
   BUFFER_SIZE = 1000 #32767
   # To stop receiving data
   SHELL_CHARACTER = ["$ "]
-  INPUT_CHARACTERS = [": "]
+  INPUT_CHARACTERS = [": ", "[Y/n] ", "[y/N] ", "[y/n] "]
   EXIT_CODE = 'EXIT_CODE:'
   TAIL_LENGTH = 100
 

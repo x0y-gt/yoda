@@ -1,10 +1,10 @@
 def getSiteTemplate(templateType, siteDomain, ip="", port="80", proxy_port="4000"):
   if (ip):
     address = ip + ":" + port
-    proxy_address = ip + ":" + port
+    proxy_address = ip + ":" + proxy_port
   else:
     address = port
-    proxy_address = port
+    proxy_address = proxy_port
 
   return header + templates[templateType].format(domain=siteDomain, address=address, proxy_address=proxy_address, proxy_port=proxy_port)
 
