@@ -30,15 +30,19 @@ def cmd(ctx, site_type, site_domain):
 
   #install site template
   template = getSiteTemplate(site_type, site_domain)
-  template = repr(template)
-  template = template.split("\\n")
-  template = "\\n".join(template[1:-1])
-  template = template.replace('!','')
-  template = template.replace('"','\\"')
-  template = template.replace("$","\$")
+  #template = repr(template)
+  #template = template.split("\\n")
+  #template = "\\n".join(template[1:-1])
+  #template = template.replace('!','')
+  #template = template.replace('"','\\"')
+  #template = template.replace("$","\$")
   if (ctx.verbose):
     click.echo("Creating server block in nginx")
-  code, output = shell.cmd('printf "%s" | sudo tee /etc/nginx/sites-available/%s' % (template, site_domain))
+  shell.cmd('echo "" | sudo tee /etc/nginx/sites-available/%s' % site_domain)
+  shell.cmd('sudo chown -v %s:%s /etc/nginx/sites-available/%s' % (shell.user, shell.user, site_domain))
+  file = shell.put(template, "/etc/nginx/sites-available/%s" % site_domain)
+  shell.cmd('sudo chown -v root:root /etc/nginx/sites-available/%s' % site_domain)
+  #code, output = shell.cmd('printf "%s" | sudo tee /etc/nginx/sites-available/%s' % (template, site_domain))
 
   #Create symbolic link to sites-enabled
   if (ctx.verbose):
