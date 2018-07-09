@@ -52,7 +52,7 @@ Group={group}
 PIDFile=/tmp/{name}.pid
 {environment}
 WorkingDirectory={working_dir}
-ExecStart="{start_cmd}"
+ExecStart={start_cmd}
 ExecReload=/bin/kill -s HUP $MAINPID
 ExecStop=/bin/kill -s TERM $MAINPID
 
