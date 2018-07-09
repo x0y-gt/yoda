@@ -1,4 +1,4 @@
-def getSiteTemplate(templateType, siteDomain, ip="", port="80", proxy_port="4000"):
+def getSiteTemplate(templateType, siteDomain, ip="", port="80", internal_proxy_port="4000", proxy_port="8000"):
   if (ip):
     address = ip + ":" + port
     proxy_address = ip + ":" + proxy_port
@@ -6,7 +6,7 @@ def getSiteTemplate(templateType, siteDomain, ip="", port="80", proxy_port="4000
     address = port
     proxy_address = proxy_port
 
-  return header + templates[templateType].format(domain=siteDomain, address=address, proxy_address=proxy_address, proxy_port=proxy_port)
+  return header + templates[templateType].format(domain=siteDomain, address=address, proxy_address=proxy_address, proxy_port=proxy_port, internal_proxy_port=internal_proxy_port)
 
 templates = {
   #php5 ----------------------------------------------------------------------
@@ -58,7 +58,7 @@ server {{
   error_log  /var/log/nginx/domains/{domain}.error.log error;
 
   location / {{
-    proxy_pass http://127.0.0.1:{proxy_port};
+    proxy_pass http://127.0.0.1:{internal_proxy_port};
     access_log /var/log/nginx/domains/{domain}.log combined;
   }}
 
@@ -76,7 +76,7 @@ map $http_upgrade $connection_upgrade {{
 }}
 
 server {{
-  listen {proxy_address};
+  listen {internal_proxy_port};
   server_name {domain} www.{domain};
 
   location / {{

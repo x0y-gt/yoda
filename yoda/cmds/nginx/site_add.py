@@ -2,8 +2,6 @@ import click
 from yoda.main import pass_cmd
 from yoda.cmds.nginx.site_template import getSiteTemplate
 
-import sys
-
 @click.command('site_add', short_help='Creates a new nginx virtualhost.')
 @click.option('-t', '--site-type', default="html", type=click.Choice(['html', 'php5', 'php7', 'node', 'mkdocs']))
 @click.argument('site_domain')
@@ -30,12 +28,6 @@ def cmd(ctx, site_type, site_domain):
 
   #install site template
   template = getSiteTemplate(site_type, site_domain)
-  #template = repr(template)
-  #template = template.split("\\n")
-  #template = "\\n".join(template[1:-1])
-  #template = template.replace('!','')
-  #template = template.replace('"','\\"')
-  #template = template.replace("$","\$")
   if (ctx.verbose):
     click.echo("Creating server block in nginx")
   shell.cmd('echo "" | sudo tee /etc/nginx/sites-available/%s' % site_domain)
