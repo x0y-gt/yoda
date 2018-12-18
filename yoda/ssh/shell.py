@@ -10,7 +10,7 @@ class Shell(object):
   # Max buffer in a paramiko shell
   BUFFER_SIZE = 1000 #32767
   # To stop receiving data
-  SHELL_CHARACTER = ["$ "]
+  SHELL_CHARACTER = ["$ ", "# "]
   INPUT_CHARACTERS = [": ", "[Y/n] ", "[y/N] ", "[y/n] "]
   EXIT_CODE = 'EXIT_CODE:'
   TAIL_LENGTH = 100
@@ -43,7 +43,7 @@ class Shell(object):
   def connect(self):
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    client.connect(self.host, port=self.port, username=self.user, key_filename=self.keyfile)
+    client.connect(self.host, port=self.port, username=self.user, key_filename=self.keyfile, timeout=30)
     self.shell = client.invoke_shell()
     self.sftp = client.open_sftp()
     sleep(Shell.WAIT_FOR_DATA)
