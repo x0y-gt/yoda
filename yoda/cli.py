@@ -15,8 +15,22 @@ if dotenv:
 
 
 def load_config(path="yoda.json"):
-    with open(path) as f:
-        return json.load(f)
+    try:
+        with open(path) as f:
+            config = json.load(f)
+    except FileNotFoundError:
+        print(f"❌ Config file '{path}' not found")
+        print("   Create a yoda.json file in the current directory")
+        sys.exit(1)
+    except json.JSONDecodeError as e:
+        print(f"❌ Invalid JSON in '{path}': {e.msg} (line {e.lineno})")
+        sys.exit(1)
+
+    if "projects" not in config:
+        print(f"❌ Config file '{path}' missing required 'projects' key")
+        sys.exit(1)
+
+    return config
 
 
 def resolve_vars(template: str, context: dict, shell_escape: bool = False) -> str:
@@ -66,7 +80,11 @@ def run_task(project: str, task_name: str, config: dict, overrides: dict):
     final_env.update(project_env)
 
     # Lookup & validate the task
-    tasks = proj["tasks"]
+    tasks = proj.get("tasks")
+    if not tasks:
+        print(f"❌ Project '{project}' has no 'tasks' defined")
+        sys.exit(1)
+
     task = tasks.get(task_name)
     if not task:
         print(f"❌ Task '{task_name}' not found in project '{project}'")
@@ -88,30 +106,49 @@ def run_task(project: str, task_name: str, config: dict, overrides: dict):
         if p not in final_env:
             final_env[p] = ""
 
-    # Run any “pre” tasks
+    # Run any "pre" tasks
     if isinstance(task, dict):
         for pre in task.get("pre", []):
             run_task(project, pre, config, overrides)
-        cmd_tmpl = task["run"]
+        cmd_tmpl = task.get("run")
+        if not cmd_tmpl:
+            print(f"❌ Task '{task_name}' missing required 'run' command")
+            sys.exit(1)
     else:
         cmd_tmpl = task
 
     # Final macro‐substitution (with shell escaping to prevent injection)
     cmd = resolve_vars(cmd_tmpl, final_env, shell_escape=True)
     print(f"→ Executing: {cmd}\n")
-    subprocess.run(cmd, shell=True, check=True)
+
+    try:
+        subprocess.run(cmd, shell=True, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"\n❌ Command failed with exit code {e.returncode}")
+        sys.exit(e.returncode)
 
 
 def main():
     if len(sys.argv) < 3:
-        print("Usage: python yoda.py <project> <task> [KEY=VALUE...]")
+        print("Usage: yoda <project> <task> [KEY=VALUE...]")
         sys.exit(1)
 
     project, task_name, *rest = sys.argv[1:]
-    overrides = dict(arg.split("=", 1) for arg in rest if "=" in arg)
+    overrides = {}
+    for arg in rest:
+        if "=" in arg:
+            key, val = arg.split("=", 1)
+            overrides[key] = val
+        else:
+            print(f"❌ Invalid argument '{arg}' - expected KEY=VALUE format")
+            sys.exit(1)
 
-    cfg = load_config()
-    run_task(project, task_name, cfg, overrides)
+    try:
+        cfg = load_config()
+        run_task(project, task_name, cfg, overrides)
+    except KeyboardInterrupt:
+        print("\n⚠️  Interrupted")
+        sys.exit(130)
 
 
 if __name__ == "__main__":
