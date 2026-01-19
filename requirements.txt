@@ -1,2 +1,0 @@
-click==6.7
-plumbum==1.6.6
