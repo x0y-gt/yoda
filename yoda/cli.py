@@ -9,7 +9,9 @@ from dotenv import load_dotenv, find_dotenv
 # Locate and load the .env in the repo root (override anything already set).
 # The .env file is optional - if not found, only existing env vars will be used.
 dotenv_path = os.path.join(os.getcwd(), ".env")
-dotenv = find_dotenv(filename=dotenv_path, raise_error_if_not_found=False)
+dotenv = find_dotenv(
+    filename=dotenv_path, raise_error_if_not_found=False
+)
 if dotenv:
     load_dotenv(dotenv, override=True)
 
@@ -33,7 +35,9 @@ def load_config(path="yoda.json"):
     return config
 
 
-def resolve_vars(template: str, context: dict, shell_escape: bool = False) -> str:
+def resolve_vars(
+    template: str, context: dict, shell_escape: bool = False
+) -> str:
     """Replace ${VAR} placeholders with values from context.
 
     Args:
@@ -92,13 +96,15 @@ def run_task(project: str, task_name: str, config: dict, overrides: dict):
 
     # Enforce required params (if any)
     #    Params ending with "?" are optional (e.g., "MESSAGE?")
-    params = task.get("params", [])
+    params = task.get("params", []) if isinstance(task, dict) else []
     required_params = [p for p in params if not p.endswith("?")]
     optional_params = [p.rstrip("?") for p in params if p.endswith("?")]
 
     missing = [p for p in required_params if p not in final_env]
     if missing:
-        print(f"❌ Missing required param(s) {missing} for '{project}:{task_name}'")
+        print(
+            f"❌ Missing required param(s) {missing} for '{project}:{task_name}'"
+        )
         sys.exit(1)
 
     # Set empty string for missing optional params
@@ -130,7 +136,7 @@ def run_task(project: str, task_name: str, config: dict, overrides: dict):
 
 def main():
     if len(sys.argv) < 3:
-        print("Usage: yoda <project> <task> [KEY=VALUE...]")
+        print("Usage: must <project> <task> [KEY=VALUE...]")
         sys.exit(1)
 
     project, task_name, *rest = sys.argv[1:]

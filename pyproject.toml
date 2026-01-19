@@ -3,8 +3,8 @@ requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "yoda"
-version = "0.1.0"
+name = "yoda-must"
+version = "0.9.0"
 description = "A CLI tool to build, push, and deploy services to a VPS"
 authors = [
   { name="x0y", email="x0y@milkyweb.co" }
@@ -17,5 +17,8 @@ dependencies = [
   "python-dotenv>=1.1.0"
 ]
 
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
 [project.scripts]
-yoda = "yoda.cli:main"
+must = "yoda.cli:main"
