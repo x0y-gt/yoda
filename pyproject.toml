@@ -3,7 +3,7 @@ requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "yoda-must"
+name = "yoda"
 version = "0.9.0"
 description = "A CLI tool to build, push, and deploy services to a VPS"
 authors = [
@@ -18,7 +18,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0"]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0.0"
+]
 
 [project.scripts]
-must = "yoda.cli:main"
+yoda = "yoda.cli:main"

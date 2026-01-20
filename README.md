@@ -1,4 +1,4 @@
-# Yoda Must (`must`)
+# Yoda
 
 A flexible, config-driven CLI tool designed to orchestrate build, publish, and deploy workflows for your services to a VPS. It functions as a lightweight task runner with environment variable management.
 
@@ -8,7 +8,6 @@ A flexible, config-driven CLI tool designed to orchestrate build, publish, and d
 - **Environment Management:** Seamless integration with `.env` files and environment variable substitution.
 - **Task Dependencies:** Support for `pre` hooks to run prerequisite tasks.
 - **Parameter Validation:** Define required and optional parameters for your tasks.
-- **Secure:** Automatic shell escaping for variable substitution to prevent injection.
 
 ## Installation
 
@@ -22,7 +21,7 @@ pip install .
 
 ## Configuration
 
-`must` requires a `yoda.json` file in your working directory. Here is a minimal example:
+`yoda` requires a `yoda.json` file in your working directory. Here is a minimal example:
 
 ```json
 {
@@ -45,7 +44,7 @@ pip install .
 The basic syntax is:
 
 ```bash
-must <project> <task> [KEY=VALUE...]
+yoda <project> <task> [KEY=VALUE...]
 ```
 
 ### Examples
@@ -53,7 +52,7 @@ must <project> <task> [KEY=VALUE...]
 **Deploy a specific version:**
 
 ```bash
-must myweb deploy TAG=v1.0.1
+yoda myweb deploy TAG=v1.0.1
 ```
 
 ## Development

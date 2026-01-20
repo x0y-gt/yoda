@@ -123,12 +123,12 @@ def run_task(project: str, task_name: str, config: dict, overrides: dict):
     else:
         cmd_tmpl = task
 
-    # Final macro‐substitution (with shell escaping to prevent injection)
-    cmd = resolve_vars(cmd_tmpl, final_env, shell_escape=True)
+    # Final macro‐substitution (no shell escaping, user must quote if needed)
+    cmd = resolve_vars(cmd_tmpl, final_env, shell_escape=False)
     print(f"→ Executing: {cmd}\n")
 
     try:
-        subprocess.run(cmd, shell=True, check=True)
+        subprocess.run(cmd, shell=True, check=True, env=final_env)
     except subprocess.CalledProcessError as e:
         print(f"\n❌ Command failed with exit code {e.returncode}")
         sys.exit(e.returncode)
@@ -136,7 +136,7 @@ def run_task(project: str, task_name: str, config: dict, overrides: dict):
 
 def main():
     if len(sys.argv) < 3:
-        print("Usage: must <project> <task> [KEY=VALUE...]")
+        print("Usage: yoda <project> <task> [KEY=VALUE...]")
         sys.exit(1)
 
     project, task_name, *rest = sys.argv[1:]

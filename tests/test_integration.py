@@ -94,8 +94,8 @@ class TestCLIIntegration:
         assert result.returncode == 1
         assert "Missing required param" in result.stdout
 
-    def test_shell_injection_prevented(self, tmp_path, monkeypatch):
-        """Test that shell injection is prevented"""
+    def test_shell_features_enabled(self, tmp_path, monkeypatch):
+        """Test that shell features are enabled (no escaping)"""
         config = {
             "projects": {
                 "demo": {
@@ -111,15 +111,20 @@ class TestCLIIntegration:
         (tmp_path / "yoda.json").write_text(json.dumps(config))
         monkeypatch.chdir(tmp_path)
 
-        # Try to inject a command
+        # Try to use a shell feature
+        # We use expr 1 + 1 which should output 2 if executed by shell
+        # If escaped, it would print the literal string $(expr 1 + 1)
         result = subprocess.run(
             [
-                sys.executable, "-m", "yoda.cli", "demo", "echo", "MSG=$(whoami)"
+                sys.executable, "-m", "yoda.cli", "demo", "echo", "MSG=$(expr 1 + 1)"
             ],
             capture_output=True,
             text=True
         )
 
         assert result.returncode == 0
-        # Should print the literal string, not execute whoami
-        assert "$(whoami)" in result.stdout
+        # Should execute and print 2
+        # We look for "2" in the output. 
+        # Note: log message will contain $(expr 1 + 1) so we can't assert it's missing.
+        # But "2" should NOT appear if it was just printing the literal string.
+        assert "2" in result.stdout
